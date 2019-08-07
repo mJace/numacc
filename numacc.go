@@ -53,14 +53,21 @@ func numacc() error {
 	pidCpuMap := initPidMapByContainerID(config.containerID)
 	fillCpuIdByPidMap(pidCpuMap)
 	fmt.Println("Process and CPU for Container ",config.containerID,)
-	fmt.Println("PID\tCPU")
-	for k,v := range pidCpuMap{
-		fmt.Println(k,"\t",v)
+	fmt.Println("PID\tCurrentCpu\tCpuAffinity")
+	tasksetSlice := checkPidMapTaskset(pidCpuMap)
+	for k,v := range pidCpuMap {
+		fmt.Println(k, "\t", v, "\t", tasksetSlice[k])
 	}
 
-	checkPidMapTaskset(pidCpuMap)
-
-	getNicNumaByContainerId(config.containerID)
+	fmt.Println("The NIC NUMA for container ", config.containerID)
+	for k,v := range getNicNumaByContainerId(config.containerID) {
+		fmt.Print(k, "\t")
+		if v == ""{
+			fmt.Println("N/A")
+		} else {
+			fmt.Println(v)
+		}
+	}
 
 	return nil
 }
@@ -79,7 +86,7 @@ func getCpuIDByPid(id string) string {
 
 func initPidMapByContainerID(id string) map[string]string {
 	pidCpuMap := make(map[string]string)
-	cmd := exec.Command("docker", "top", config.containerID)
+	cmd := exec.Command("docker", "top", id)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		log.Fatalf("cmd.Run() failed with %s\n", err)
@@ -102,7 +109,8 @@ func fillCpuIdByPidMap(inputMap map[string]string){
 	}
 }
 
-func checkPidMapTaskset(inputMap map[string]string){
+func checkPidMapTaskset(inputMap map[string]string) map[string]string{
+	tasksetMap := make(map[string]string)
 	for k := range inputMap {
 		cmd := exec.Command("taskset", "-cp", k)
 		out, err := cmd.CombinedOutput()
@@ -111,8 +119,9 @@ func checkPidMapTaskset(inputMap map[string]string){
 		}
 		tmp := strings.Split(string(out)," ")
 		affinity := tmp[len(tmp)-1]
-		fmt.Print(string(affinity))
+		tasksetMap[k]  = strings.TrimSuffix(string(affinity), "\n")
 	}
+	return tasksetMap
 }
 
 func getNicNumaByContainerId(cid string) map[string]string {
@@ -138,6 +147,5 @@ func getNicNumaByContainerId(cid string) map[string]string {
 			nicCpuMap[allNic[i]] = strings.TrimSuffix(string(out), "\n")
 		}
 	}
-	fmt.Println(nicCpuMap)
 	return nicCpuMap
 }
