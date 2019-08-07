@@ -2,9 +2,10 @@
 **NUMA Configuration Checker for Container**  
 NUMACC is a golang-based tool to check CPU affinity and NUMA configuration for containers and pods.  
 NUMACC will indicates following information:   
-    1. Which CPU core that process runs on.  
-    2. Whether this process is pin to certain CPU core or not.      
-    3. NUMA node of net devices for given container/pod.  
+1. Which CPU core that process runs on.  
+2. Whether this process is pin to certain CPU core or not.      
+3. NUMA node of net devices for given container/pod.  
+
 Allowing user to know if the container/pod is under proper NUMA configuration.
 
 ## Requirement
