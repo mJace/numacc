@@ -130,12 +130,12 @@ func getNicNumaByContainerId(cid string) map[string]string {
 
 	nicCpuMap := make(map[string]string)
 	for i := range allNic {
-		cmd := exec.Command("docker", "exec", cid, "cat", "/sys/class/net"+allNic[i]+"/device/numa_node")
+		cmd := exec.Command("docker", "exec", cid, "cat", "/sys/class/net/"+allNic[i]+"/device/numa_node")
 		out, _ := cmd.CombinedOutput()
 		if strings.Contains(string(out), "No such file or directory") {
 			nicCpuMap[allNic[i]] = ""
 		} else {
-			nicCpuMap[allNic[i]] = string(out)
+			nicCpuMap[allNic[i]] = strings.TrimSuffix(string(out), "\n")
 		}
 	}
 	fmt.Println(nicCpuMap)
