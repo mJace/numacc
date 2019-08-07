@@ -14,7 +14,7 @@
 
 package main
 
-import "numacc/cmd"
+import "./cmd"
 
 func main() {
 	cmd.Execute()
