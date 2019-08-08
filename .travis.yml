@@ -3,5 +3,3 @@ language: go
 go:
   - "1.10.4"
 
-install:
-  - go get -d ./...
