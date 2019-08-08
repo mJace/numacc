@@ -14,7 +14,7 @@
 
 package main
 
-import "github.com/mjace/numacc/cmd"
+import "github.com/mJace/numacc/cmd"
 
 func main() {
 	cmd.Execute()
