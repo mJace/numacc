@@ -17,10 +17,11 @@ package cmd
 import (
 	"fmt"
 	"log"
-	"github.com/spf13/cobra"
 	"os/exec"
 	"regexp"
 	"strings"
+
+	"github.com/spf13/cobra"
 )
 
 // cidCmd represents the cid command
@@ -32,7 +33,7 @@ var cidCmd = &cobra.Command{
 		"numacc cid 1234ABCD",
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-				numacc(args[0])
+		numacc(args[0])
 	},
 }
 
@@ -43,17 +44,17 @@ func init() {
 func numacc(cid string) error {
 	pidCpuMap := initPidMapByContainerID(cid)
 	fillCpuIdByPidMap(pidCpuMap)
-	fmt.Println("Process and CPU for Container ",cid)
+	fmt.Println("Process and CPU for Container ", cid)
 	fmt.Println("PID\tCurrentCpu\tCpuAffinity")
 	tasksetSlice := checkPidMapTaskset(pidCpuMap)
-	for k,v := range pidCpuMap {
+	for k, v := range pidCpuMap {
 		fmt.Println(k, "\t", v, "\t", tasksetSlice[k])
 	}
 
 	fmt.Println("The NIC NUMA for container ", cid)
-	for k,v := range getNicNumaByContainerId(cid) {
+	for k, v := range getNicNumaByContainerId(cid) {
 		fmt.Print(k, "\t")
-		if v == ""{
+		if v == "" {
 			fmt.Println("N/A")
 		} else {
 			fmt.Println(v)
@@ -64,12 +65,12 @@ func numacc(cid string) error {
 }
 
 func getCpuIDByPid(id string) string {
-	cmd := exec.Command("ps", "-o", "psr" ,"-p", id)
+	cmd := exec.Command("ps", "-o", "psr", "-p", id)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		log.Fatalf("cmd.Run() failed with %s\n", err)
 	}
-	cpuID := strings.Split(string(out),"\n")[1]
+	cpuID := strings.Split(string(out), "\n")[1]
 	cpuID = strings.TrimPrefix(cpuID, "  ")
 	cpuID = strings.TrimSuffix(cpuID, " ")
 	return cpuID
@@ -83,7 +84,7 @@ func initPidMapByContainerID(id string) map[string]string {
 		log.Fatalf(string(out))
 	}
 	for counter := 1; counter < len(strings.Split(string(out), "\n"))-1; counter++ {
-		tmpId := strings.Split(string(out),"\n")[counter]
+		tmpId := strings.Split(string(out), "\n")[counter]
 		re, _ := regexp.Compile("\\s(\\w+)\\S")
 
 		pId := re.FindStringSubmatch(tmpId)
@@ -94,13 +95,13 @@ func initPidMapByContainerID(id string) map[string]string {
 	return pidCpuMap
 }
 
-func fillCpuIdByPidMap(inputMap map[string]string){
+func fillCpuIdByPidMap(inputMap map[string]string) {
 	for k := range inputMap {
 		inputMap[k] = getCpuIDByPid(k)
 	}
 }
 
-func checkPidMapTaskset(inputMap map[string]string) map[string]string{
+func checkPidMapTaskset(inputMap map[string]string) map[string]string {
 	tasksetMap := make(map[string]string)
 	for k := range inputMap {
 		cmd := exec.Command("taskset", "-cp", k)
@@ -108,23 +109,23 @@ func checkPidMapTaskset(inputMap map[string]string) map[string]string{
 		if err != nil {
 			log.Fatalf("cmd.Run() failed with %s\n", err)
 		}
-		tmp := strings.Split(string(out)," ")
+		tmp := strings.Split(string(out), " ")
 		affinity := tmp[len(tmp)-1]
-		tasksetMap[k]  = strings.TrimSuffix(string(affinity), "\n")
+		tasksetMap[k] = strings.TrimSuffix(string(affinity), "\n")
 	}
 	return tasksetMap
 }
 
 func getNicNumaByContainerId(cid string) map[string]string {
 	//Get all nic in container
-	cmd := exec.Command("docker", "exec", cid, "ls" , "/sys/class/net")
+	cmd := exec.Command("docker", "exec", cid, "ls", "/sys/class/net")
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		log.Println(string(out))
 		log.Fatalf("cmd.Run() failed with %s\n", err)
 	}
-	allNic := strings.Split(string(out),"\n")
-	if len(allNic) > 0 && allNic[len(allNic)-1] == ""{
+	allNic := strings.Split(string(out), "\n")
+	if len(allNic) > 0 && allNic[len(allNic)-1] == "" {
 		allNic = allNic[:len(allNic)-1]
 	}
 
